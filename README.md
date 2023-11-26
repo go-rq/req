@@ -14,6 +14,13 @@ req
 
 # load all requests from the directory tree at the specified path
 req ./path/to/dir
+
+req --help
+Usage of req:
+  -e string
+        path to .env file (shorthand)
+  -env string
+        path to .env file
 ```
 
 ## .http File Syntax
