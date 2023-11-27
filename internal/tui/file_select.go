@@ -106,6 +106,7 @@ func (f *FileSelect) renderList(values []string) {
 }
 
 func (f *FileSelect) Mount(app *tview.Application) {
+	f.listFiles(httpFileFilter)
 	app.SetRoot(f.layout, true)
 }
 

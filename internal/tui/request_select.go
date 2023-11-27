@@ -13,12 +13,14 @@ type RequestSelect struct {
 	list             *tview.List
 	layout           *tview.Frame
 	inputField       *tview.InputField
+	path             string
 	selected         rq.Request
 	searchString     string
 	selectedCallback RequestSelectedCallback
 	requests         []rq.Request
 	previousView     View
 }
+
 type RequestSelectedCallback func(request rq.Request)
 
 type requestFuzzySource []rq.Request
@@ -31,12 +33,12 @@ func (r requestFuzzySource) Len() int {
 	return len(r)
 }
 
-func NewRequestSelectView(app *tview.Application, requests []rq.Request, previousView View) *RequestSelect {
+func NewRequestSelectView(app *tview.Application, path string, previousView View) *RequestSelect {
 	view := &RequestSelect{
 		app:          app,
 		list:         tview.NewList(),
 		inputField:   tview.NewInputField(),
-		requests:     requests,
+		path:         path,
 		previousView: previousView,
 	}
 	view.list.SetBorder(true).SetTitle("Requests")
@@ -50,7 +52,7 @@ func NewRequestSelectView(app *tview.Application, requests []rq.Request, previou
 			AddItem(view.inputField, 1, 1, true).
 			AddItem(tview.NewBox().SetBorder(false), 0, 1, false), 0, 4, false).
 		AddItem(tview.NewBox().SetBorder(false), 0, 1, false)
-	view.renderList(requests)
+	view.loadRequests()
 	view.layout = tview.NewFrame(flex)
 	view.layout.AddText("Select Request", true, tview.AlignCenter, tcell.ColorBlue)
 	view.layout.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
@@ -100,6 +102,19 @@ func (f *RequestSelect) renderList(requests []rq.Request) {
 	}
 }
 
+func (f *RequestSelect) loadRequests() error {
+	requests, err := rq.ParseFromFile(f.path)
+	if err != nil {
+		return err
+	}
+	f.requests = requests
+	f.renderList(requests)
+	return nil
+}
+
 func (f *RequestSelect) Mount(app *tview.Application) {
+	if err := f.loadRequests(); err != nil {
+		f.previousView.Mount(f.app)
+	}
 	app.SetRoot(f.layout, true)
 }

@@ -44,11 +44,7 @@ func main() {
 
 func selectFile(ctx context.Context, app *tview.Application, prevView tui.View) func(string) {
 	return func(path string) {
-		reqs, err := rq.ParseFromFile(path)
-		if err != nil {
-			panic(err)
-		}
-		rv := tui.NewRequestSelectView(app, reqs, prevView)
+		rv := tui.NewRequestSelectView(app, path, prevView)
 		rv.SetCallback(selectRequest(ctx, app, rv))
 		rv.Mount(app)
 	}
