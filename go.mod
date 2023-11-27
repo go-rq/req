@@ -6,7 +6,7 @@ require (
 	github.com/alecthomas/chroma v0.10.0
 	github.com/atotto/clipboard v0.1.4
 	github.com/gdamore/tcell/v2 v2.6.0
-	github.com/go-rq/rq v0.2.0
+	github.com/go-rq/rq v0.2.1-0.20231127181009-5c5c5d9afb51
 	github.com/rivo/tview v0.0.0-20231126152417-33a1d271f2b6
 	github.com/sahilm/fuzzy v0.1.0
 	github.com/samber/lo v1.38.1
