@@ -145,6 +145,14 @@ func (view *RequestView) showRequest() {
 				view.showPrettyResponse(len(view.responses) - 1)
 			},
 		},
+		{
+			Name: "Logs",
+			Key:  tcell.KeyRune,
+			Rune: 'l',
+			Handler: func() {
+				view.showLogs(view.showRequest)
+			},
+		},
 	}
 	view.registerCommands(append(view.baseCommands, commands...)...)
 }
@@ -183,6 +191,14 @@ func (view *RequestView) showPrettyResponse(idx int) {
 				view.showAssertions(idx, view.showPrettyResponse)
 			},
 		},
+		{
+			Name: "Logs",
+			Key:  tcell.KeyRune,
+			Rune: 'l',
+			Handler: func() {
+				view.showLogs(func() { view.showPrettyResponse(idx) })
+			},
+		},
 	}
 	view.registerCommands(append(view.baseCommands, commands...)...)
 }
@@ -217,6 +233,14 @@ func (view *RequestView) showRawResponse(idx int) {
 				view.showAssertions(idx, view.showRawResponse)
 			},
 		},
+		{
+			Name: "Logs",
+			Key:  tcell.KeyRune,
+			Rune: 'l',
+			Handler: func() {
+				view.showLogs(func() { view.showRawResponse(idx) })
+			},
+		},
 	}
 	view.registerCommands(append(view.baseCommands, commands...)...)
 }
@@ -233,6 +257,14 @@ func (view *RequestView) showError(err error) {
 				view.showRequest()
 			},
 		},
+		{
+			Name: "Logs",
+			Key:  tcell.KeyRune,
+			Rune: 'l',
+			Handler: func() {
+				view.showLogs(func() { view.showError(err) })
+			},
+		},
 	}
 	view.registerCommands(append(view.baseCommands, commands...)...)
 }
@@ -244,7 +276,7 @@ func (view *RequestView) showAssertions(idx int, previousView func(int)) {
 
 	builder := strings.Builder{}
 	builder.WriteString("[::bu]Pre-Request Assertions[::-]:\n")
-	writeAssertionResults(&builder, resp.PreRequestAssertions...)
+	writeAssertionResults(&builder, view.request.PreRequestAssertions...)
 	builder.WriteString("\n[::bu]Post-Request Assertions[::-]:\n")
 	writeAssertionResults(&builder, resp.PostRequestAssertions...)
 
@@ -255,6 +287,30 @@ func (view *RequestView) showAssertions(idx int, previousView func(int)) {
 			Key:  tcell.KeyEscape,
 			Handler: func() {
 				previousView(idx)
+			},
+		}, {
+			Name: "Logs",
+			Key:  tcell.KeyRune,
+			Rune: 'l',
+			Handler: func() {
+				view.showLogs(func() { view.showAssertions(idx, previousView) })
+			},
+		},
+	}
+	view.registerCommands(append(view.baseCommands, commands...)...)
+}
+
+func (view *RequestView) showLogs(previousView func()) {
+	view.main.SetBorder(false).SetTitle("Logs").SetTitleColor(tcell.ColorViolet)
+	view.main.SetDynamicColors(true)
+
+	view.main.SetText(strings.Join(view.request.Logs, "\n"))
+	commands := []Command{
+		{
+			Name: "Clear",
+			Key:  tcell.KeyEscape,
+			Handler: func() {
+				previousView()
 			},
 		},
 	}
