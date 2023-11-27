@@ -6,7 +6,7 @@ CLI Application for running .http files
 ## Installation
 
 ```shell
-go install github.com/go-rq/req
+go install github.com/go-rq/req@latest
 ```
 
 ## Usage
