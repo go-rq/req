@@ -1,4 +1,4 @@
-# github.com/go-req/req
+# req
 CLI Application for running .http files
 
 [![asciicast](https://asciinema.org/a/623455.png)](https://asciinema.org/a/623455)
