@@ -14,6 +14,14 @@ import (
 	"github.com/rivo/tview"
 )
 
+const (
+	HTTPLexer        = "HTTP"
+	JavascriptLexer  = "javascript"
+	DefaultTheme     = "base16-snazzy"
+	AlternativeTheme = "doom-one"
+	ColorScheme      = "terminal16"
+)
+
 var SelectedRequest *rq.Request
 
 type RequestView struct {
@@ -31,9 +39,9 @@ type RequestView struct {
 }
 
 type Response struct {
-	rq.Response
 	cachedPrettyString string
 	cachedRawString    string
+	rq.Response
 }
 
 func (p *Response) prettyString() (string, error) {
@@ -42,14 +50,14 @@ func (p *Response) prettyString() (string, error) {
 		if err != nil {
 			return "", err
 		}
-		p.cachedPrettyString = colorize(text, "base16-snazzy", true)
+		p.cachedPrettyString = colorize(text, HTTPLexer, DefaultTheme, true)
 	}
 	return p.cachedPrettyString, nil
 }
 
 func (p *Response) rawString() string {
 	if p.cachedRawString == "" {
-		p.cachedRawString = colorize(p.Response.String(), "base16-snazzy", true)
+		p.cachedRawString = colorize(p.Response.String(), HTTPLexer, DefaultTheme, true)
 	}
 
 	return p.cachedRawString
@@ -111,12 +119,12 @@ type Command struct {
 	Key     tcell.Key
 }
 
-func colorize(text string, theme string, color bool) string {
+func colorize(text, lexer, theme string, color bool) string {
 	if !color {
 		return text
 	}
 	buf := bytes.NewBuffer(nil)
-	quick.Highlight(buf, text, "HTTP", "terminal8", theme)
+	quick.Highlight(buf, text, lexer, ColorScheme, theme)
 	return tview.TranslateANSI(buf.String())
 }
 
@@ -124,7 +132,7 @@ func (view *RequestView) showRawRequest() {
 	view.main.SetBorder(false).SetTitle("Request").SetTitleColor(tcell.ColorAliceBlue)
 	view.main.SetTextColor(tcell.ColorDefault)
 
-	view.main.SetText(colorize(view.request.HttpText(), "doom-one", true))
+	view.main.SetText(colorize(view.request.HttpText(), HTTPLexer, AlternativeTheme, true))
 	commands := []Command{
 		{
 			Name: "Back",
@@ -138,6 +146,14 @@ func (view *RequestView) showRawRequest() {
 			Key:  tcell.KeyTab,
 			Handler: func() {
 				view.showProcessedRequest()
+			},
+		},
+		{
+			Name: "Scripts",
+			Key:  tcell.KeyRune,
+			Rune: 's',
+			Handler: func() {
+				view.showScripts(view.showRawRequest)
 			},
 		},
 		{
@@ -169,7 +185,7 @@ func (view *RequestView) showProcessedRequest() {
 	view.main.SetBorder(false).SetTitle("Request").SetTitleColor(tcell.ColorAliceBlue)
 	view.main.SetTextColor(tcell.ColorDefault)
 	request := view.request.ApplyEnv(view.context)
-	view.main.SetText(colorize(request.HttpText(), "doom-one", true))
+	view.main.SetText(colorize(request.HttpText(), HTTPLexer, "doom-one", true))
 	commands := []Command{
 		{
 			Name: "Back",
@@ -183,6 +199,14 @@ func (view *RequestView) showProcessedRequest() {
 			Key:  tcell.KeyTab,
 			Handler: func() {
 				view.showRawRequest()
+			},
+		},
+		{
+			Name: "Scripts",
+			Key:  tcell.KeyRune,
+			Rune: 's',
+			Handler: func() {
+				view.showScripts(view.showRawRequest)
 			},
 		},
 		{
@@ -273,7 +297,7 @@ func (view *RequestView) showRawResponse(idx int) {
 		{
 			Name: "Pretty Print",
 			Key:  tcell.KeyRune,
-			Rune: 'p',
+			Rune: 'r',
 			Handler: func() {
 				view.showPrettyResponse(idx)
 			},
@@ -347,6 +371,29 @@ func (view *RequestView) showAssertions(idx int, previousView func(int)) {
 			Rune: 'l',
 			Handler: func() {
 				view.showLogs(func() { view.showAssertions(idx, previousView) })
+			},
+		},
+	}
+	view.registerCommands(append(view.baseCommands, commands...)...)
+}
+
+func (view *RequestView) showScripts(previousView func()) {
+	view.main.SetBorder(false).SetTitle("Assertions").SetTitleColor(tcell.ColorYellowGreen)
+	view.main.SetDynamicColors(true)
+
+	builder := strings.Builder{}
+	builder.WriteString("[::bu]Pre-Request Scripts[::-]:\n")
+	builder.WriteString(colorize(view.request.PreRequestScript, JavascriptLexer, AlternativeTheme, true) + "\n")
+	builder.WriteString("\n[::bu]Post-Request Scripts[::-]:\n")
+	builder.WriteString(colorize(view.request.PostRequestScript, JavascriptLexer, AlternativeTheme, true))
+
+	view.main.SetText(builder.String())
+	commands := []Command{
+		{
+			Name: "Clear",
+			Key:  tcell.KeyEscape,
+			Handler: func() {
+				previousView()
 			},
 		},
 	}
