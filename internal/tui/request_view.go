@@ -89,7 +89,7 @@ func NewRequestView(ctx context.Context, app *tview.Application, request rq.Requ
 	view.layout.SetDirection(tview.FlexRow)
 	view.layout.AddItem(view.main, 0, 7, true).
 		AddItem(view.commandsView, 1, 0, false)
-	view.showRequest()
+	view.showRawRequest()
 	view.main.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		for _, cmd := range view.commands {
 			if event.Key() == cmd.Key {
@@ -120,9 +120,10 @@ func colorize(text string, theme string, color bool) string {
 	return tview.TranslateANSI(buf.String())
 }
 
-func (view *RequestView) showRequest() {
+func (view *RequestView) showRawRequest() {
 	view.main.SetBorder(false).SetTitle("Request").SetTitleColor(tcell.ColorAliceBlue)
 	view.main.SetTextColor(tcell.ColorDefault)
+
 	view.main.SetText(colorize(view.request.HttpText(), "doom-one", true))
 	commands := []Command{
 		{
@@ -130,6 +131,13 @@ func (view *RequestView) showRequest() {
 			Key:  tcell.KeyEscape,
 			Handler: func() {
 				view.previousView.Mount(view.app)
+			},
+		},
+		{
+			Name: "With Environment",
+			Key:  tcell.KeyTab,
+			Handler: func() {
+				view.showProcessedRequest()
 			},
 		},
 		{
@@ -150,7 +158,52 @@ func (view *RequestView) showRequest() {
 			Key:  tcell.KeyRune,
 			Rune: 'l',
 			Handler: func() {
-				view.showLogs(view.showRequest)
+				view.showLogs(view.showRawRequest)
+			},
+		},
+	}
+	view.registerCommands(append(view.baseCommands, commands...)...)
+}
+
+func (view *RequestView) showProcessedRequest() {
+	view.main.SetBorder(false).SetTitle("Request").SetTitleColor(tcell.ColorAliceBlue)
+	view.main.SetTextColor(tcell.ColorDefault)
+	request := view.request.ApplyEnv(view.context)
+	view.main.SetText(colorize(request.HttpText(), "doom-one", true))
+	commands := []Command{
+		{
+			Name: "Back",
+			Key:  tcell.KeyEscape,
+			Handler: func() {
+				view.previousView.Mount(view.app)
+			},
+		},
+		{
+			Name: "Raw Request",
+			Key:  tcell.KeyTab,
+			Handler: func() {
+				view.showRawRequest()
+			},
+		},
+		{
+			Name: "Send",
+			Key:  tcell.KeyEnter,
+			Handler: func() {
+				resp, err := view.request.Do(view.context)
+				if err != nil {
+					view.showError(err)
+					return
+				}
+				view.responses = append(view.responses, Response{Response: *resp})
+				view.showPrettyResponse(len(view.responses) - 1)
+			},
+		},
+		{
+			Name: "Logs",
+			Key:  tcell.KeyRune,
+			Rune: 'l',
+			Handler: func() {
+				view.showLogs(view.showRawRequest)
 			},
 		},
 	}
@@ -172,7 +225,7 @@ func (view *RequestView) showPrettyResponse(idx int) {
 			Name: "Clear",
 			Key:  tcell.KeyEscape,
 			Handler: func() {
-				view.showRequest()
+				view.showRawRequest()
 			},
 		},
 		{
@@ -214,7 +267,7 @@ func (view *RequestView) showRawResponse(idx int) {
 			Name: "Clear",
 			Key:  tcell.KeyEscape,
 			Handler: func() {
-				view.showRequest()
+				view.showRawRequest()
 			},
 		},
 		{
@@ -254,7 +307,7 @@ func (view *RequestView) showError(err error) {
 			Name: "Clear",
 			Key:  tcell.KeyEscape,
 			Handler: func() {
-				view.showRequest()
+				view.showRawRequest()
 			},
 		},
 		{

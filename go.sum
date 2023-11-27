@@ -25,6 +25,8 @@ github.com/gdamore/tcell/v2 v2.6.0 h1:OKbluoP9VYmJwZwq/iLb4BxwKcwGthaa1YNBJIyCyS
 github.com/gdamore/tcell/v2 v2.6.0/go.mod h1:be9omFATkdr0D9qewWW3d+MEvl5dha+Etb5y65J2H8Y=
 github.com/go-rq/rq v0.2.0 h1:YjiYGd/sfUtUxh5kkWwjvQcBmr+Zz/hzt8hEPajt0P4=
 github.com/go-rq/rq v0.2.0/go.mod h1:l09dwSNlYL1ZLm3escW5MdxB/wrAhHKPZmlh6eBbsAM=
+github.com/go-rq/rq v0.2.1-0.20231127181009-5c5c5d9afb51 h1:xfRU+MLnZw9zEobIzCpfVKGC88i8cCi7eahhnsJdj2M=
+github.com/go-rq/rq v0.2.1-0.20231127181009-5c5c5d9afb51/go.mod h1:l09dwSNlYL1ZLm3escW5MdxB/wrAhHKPZmlh6eBbsAM=
 github.com/go-sourcemap/sourcemap v2.1.3+incompatible h1:W1iEw64niKVGogNgBN3ePyLFfuisuzeidWPMPWmECqU=
 github.com/go-sourcemap/sourcemap v2.1.3+incompatible/go.mod h1:F8jJfvm2KbVjc5NqelyYJmf/v5J0dwNLS2mL4sNA1Jg=
 github.com/google/go-cmp v0.6.0 h1:ofyhxvXcZhMsU5ulbFiLKl/XBFqE1GSq7atu8tAmTRI=
