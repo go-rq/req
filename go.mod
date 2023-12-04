@@ -9,7 +9,7 @@ require (
 	github.com/go-rq/rq v0.3.0
 	github.com/rivo/tview v0.0.0-20231126152417-33a1d271f2b6
 	github.com/sahilm/fuzzy v0.1.0
-	github.com/samber/lo v1.38.1
+	github.com/samber/lo v1.39.0
 )
 
 require (
