@@ -23,13 +23,15 @@ func main() {
 	flag.Parse()
 	app := tview.NewApplication()
 	ctx := context.Background()
+	env := map[string]string{}
 	if envFilePath != "" {
-		env, err := loadEnvFile(envFilePath)
+		var err error
+		env, err = loadEnvFile(envFilePath)
 		if err != nil {
 			panic(err)
 		}
-		ctx = rq.WithEnvironment(ctx, env)
 	}
+	ctx = rq.WithEnvironment(ctx, env)
 	path := "."
 	if flag.NArg() > 1 {
 		path = flag.Arg(0)
