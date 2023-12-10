@@ -9,16 +9,16 @@ import (
 )
 
 type RequestSelect struct {
+	previousView     View
 	app              *tview.Application
 	list             *tview.List
 	layout           *tview.Frame
 	inputField       *tview.InputField
-	path             string
-	selected         rq.Request
-	searchString     string
 	selectedCallback RequestSelectedCallback
+	path             string
+	searchString     string
+	selected         rq.Request
 	requests         []rq.Request
-	previousView     View
 }
 
 type RequestSelectedCallback func(request rq.Request)

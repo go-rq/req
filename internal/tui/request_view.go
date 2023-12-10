@@ -25,17 +25,18 @@ const (
 var SelectedRequest *rq.Request
 
 type RequestView struct {
-	app          *tview.Application
-	request      *rq.Request
-	layout       *tview.Flex
-	frame        *tview.Frame
-	main         *tview.TextView
-	commandsView *tview.TextView
-	context      context.Context
-	previousView View
-	commands     []Command
-	responses    []Response
-	baseCommands []Command
+	app            *tview.Application
+	request        *rq.Request
+	layout         *tview.Flex
+	frame          *tview.Frame
+	main           *tview.TextView
+	commandsView   *tview.TextView
+	context        context.Context
+	previousView   View
+	refreshContent func()
+	commands       []Command
+	responses      []Response
+	baseCommands   []Command
 }
 
 type Response struct {
@@ -64,7 +65,7 @@ func (p *Response) rawString() string {
 }
 
 func NewRequestView(ctx context.Context, app *tview.Application, request rq.Request, previousView View) *RequestView {
-	flex := tview.NewFlex()
+	flex := tview.NewFlex().SetDirection(tview.FlexRow)
 	view := &RequestView{
 		app:          app,
 		context:      ctx,
@@ -91,10 +92,27 @@ func NewRequestView(ctx context.Context, app *tview.Application, request rq.Requ
 				clipboard.WriteAll(view.main.GetText(true))
 			},
 		},
+		{
+			Name: "Variables",
+			Key:  tcell.KeyRune,
+			Rune: 'v',
+			Handler: func() {
+				ev := NewTextEditorView(
+					ctx,
+					app,
+					func() { view.Mount(app) },
+					func(update string) {
+						view.setEnvironment(ctx, update)
+						view.Mount(app)
+					},
+					"Variables",
+					getEnvironmentText(ctx))
+				ev.Mount(app)
+			},
+		},
 	}
 
 	view.frame.AddText(request.DisplayName(), true, tview.AlignCenter, tcell.ColorForestGreen)
-	view.layout.SetDirection(tview.FlexRow)
 	view.layout.AddItem(view.main, 0, 7, true).
 		AddItem(view.commandsView, 1, 0, false)
 	view.showRawRequest()
@@ -131,8 +149,10 @@ func colorize(text, lexer, theme string, color bool) string {
 func (view *RequestView) showRawRequest() {
 	view.main.SetBorder(false).SetTitle("Request").SetTitleColor(tcell.ColorAliceBlue)
 	view.main.SetTextColor(tcell.ColorDefault)
-
-	view.main.SetText(colorize(view.request.HttpText(), HTTPLexer, AlternativeTheme, true))
+	view.refreshContent = func() {
+		view.main.SetText(colorize(view.request.HttpText(), HTTPLexer, AlternativeTheme, true))
+	}
+	view.refreshContent()
 	commands := []Command{
 		{
 			Name: "Back",
@@ -184,8 +204,11 @@ func (view *RequestView) showRawRequest() {
 func (view *RequestView) showProcessedRequest() {
 	view.main.SetBorder(false).SetTitle("Request").SetTitleColor(tcell.ColorAliceBlue)
 	view.main.SetTextColor(tcell.ColorDefault)
-	request := view.request.ApplyEnv(view.context)
-	view.main.SetText(colorize(request.HttpText(), HTTPLexer, "doom-one", true))
+	view.refreshContent = func() {
+		request := view.request.ApplyEnv(view.context)
+		view.main.SetText(colorize(request.HttpText(), HTTPLexer, "doom-one", true))
+	}
+	view.refreshContent()
 	commands := []Command{
 		{
 			Name: "Back",
@@ -235,15 +258,18 @@ func (view *RequestView) showProcessedRequest() {
 }
 
 func (view *RequestView) showPrettyResponse(idx int) {
-	resp := &view.responses[idx]
 	view.main.SetBorder(false).SetTitle("Response (Pretty)").SetTitleColor(tcell.ColorLawnGreen)
 	view.main.SetTextColor(tcell.ColorDefault)
-	text, err := resp.prettyString()
-	if err != nil {
-		view.showError(err)
-		return
+	view.refreshContent = func() {
+		resp := &view.responses[idx]
+		text, err := resp.prettyString()
+		if err != nil {
+			view.showError(err)
+			return
+		}
+		view.main.SetText(text)
 	}
-	view.main.SetText(text)
+	view.refreshContent()
 	commands := []Command{
 		{
 			Name: "Clear",
@@ -281,11 +307,14 @@ func (view *RequestView) showPrettyResponse(idx int) {
 }
 
 func (view *RequestView) showRawResponse(idx int) {
-	resp := &view.responses[idx]
 	view.main.SetBorder(false).SetTitle("Response (Raw)").SetTitleColor(tcell.ColorLawnGreen)
 	view.main.SetTextColor(tcell.ColorDefault)
-	text := resp.rawString()
-	view.main.SetText(text)
+	view.refreshContent = func() {
+		resp := &view.responses[idx]
+		text := resp.rawString()
+		view.main.SetText(text)
+	}
+	view.refreshContent()
 	commands := []Command{
 		{
 			Name: "Clear",
@@ -324,7 +353,10 @@ func (view *RequestView) showRawResponse(idx int) {
 
 func (view *RequestView) showError(err error) {
 	view.main.SetBorder(false).SetTitle("Error!").SetTitleColor(tcell.ColorOrangeRed)
-	view.main.SetText(err.Error())
+	view.refreshContent = func() {
+		view.main.SetText(err.Error())
+	}
+	view.refreshContent()
 	view.main.SetTextColor(tcell.ColorOrangeRed)
 	commands := []Command{
 		{
@@ -347,17 +379,19 @@ func (view *RequestView) showError(err error) {
 }
 
 func (view *RequestView) showAssertions(idx int, previousView func(int)) {
-	resp := view.responses[idx]
 	view.main.SetBorder(false).SetTitle("Assertions").SetTitleColor(tcell.ColorYellowGreen)
 	view.main.SetDynamicColors(true)
 
-	builder := strings.Builder{}
-	builder.WriteString("[::bu]Pre-Request Assertions[::-]:\n")
-	writeAssertionResults(&builder, view.request.PreRequestAssertions...)
-	builder.WriteString("\n[::bu]Post-Request Assertions[::-]:\n")
-	writeAssertionResults(&builder, resp.PostRequestAssertions...)
-
-	view.main.SetText(builder.String())
+	view.refreshContent = func() {
+		resp := view.responses[idx]
+		builder := strings.Builder{}
+		builder.WriteString("[::bu]Pre-Request Assertions[::-]:\n")
+		writeAssertionResults(&builder, view.request.PreRequestAssertions...)
+		builder.WriteString("\n[::bu]Post-Request Assertions[::-]:\n")
+		writeAssertionResults(&builder, resp.PostRequestAssertions...)
+		view.main.SetText(builder.String())
+	}
+	view.refreshContent()
 	commands := []Command{
 		{
 			Name: "Clear",
@@ -381,13 +415,15 @@ func (view *RequestView) showScripts(previousView func()) {
 	view.main.SetBorder(false).SetTitle("Assertions").SetTitleColor(tcell.ColorYellowGreen)
 	view.main.SetDynamicColors(true)
 
-	builder := strings.Builder{}
-	builder.WriteString("[::bu]Pre-Request Scripts[::-]:\n")
-	builder.WriteString(colorize(view.request.PreRequestScript, JavascriptLexer, AlternativeTheme, true) + "\n")
-	builder.WriteString("\n[::bu]Post-Request Scripts[::-]:\n")
-	builder.WriteString(colorize(view.request.PostRequestScript, JavascriptLexer, AlternativeTheme, true))
-
-	view.main.SetText(builder.String())
+	view.refreshContent = func() {
+		builder := strings.Builder{}
+		builder.WriteString("[::bu]Pre-Request Scripts[::-]:\n")
+		builder.WriteString(colorize(view.request.PreRequestScript, JavascriptLexer, AlternativeTheme, true) + "\n")
+		builder.WriteString("\n[::bu]Post-Request Scripts[::-]:\n")
+		builder.WriteString(colorize(view.request.PostRequestScript, JavascriptLexer, AlternativeTheme, true))
+		view.main.SetText(builder.String())
+	}
+	view.refreshContent()
 	commands := []Command{
 		{
 			Name: "Clear",
@@ -404,7 +440,10 @@ func (view *RequestView) showLogs(previousView func()) {
 	view.main.SetBorder(false).SetTitle("Logs").SetTitleColor(tcell.ColorViolet)
 	view.main.SetDynamicColors(true)
 
-	view.main.SetText(strings.Join(view.request.Logs, "\n"))
+	view.refreshContent = func() {
+		view.main.SetText(strings.Join(view.request.Logs, "\n"))
+	}
+	view.refreshContent()
 	commands := []Command{
 		{
 			Name: "Clear",
@@ -445,5 +484,33 @@ func (view *RequestView) registerCommands(commands ...Command) {
 }
 
 func (view *RequestView) Mount(app *tview.Application) {
+	view.refreshContent()
 	app.SetRoot(view.frame, true)
+}
+
+func (view *RequestView) setEnvironment(ctx context.Context, text string) {
+	env := rq.GetEnvironment(ctx)
+	clear(env)
+	lines := strings.Split(text, "\n")
+	for _, line := range lines {
+		parts := strings.SplitN(line, "=", 2)
+		if len(parts) != 2 {
+			continue
+		}
+		env[parts[0]] = parts[1]
+	}
+}
+
+func getEnvironmentText(ctx context.Context) string {
+	env := rq.GetEnvironment(ctx)
+	builder := strings.Builder{}
+	lineWritten := false
+	for k, v := range env {
+		if lineWritten {
+			builder.WriteString("\n")
+		}
+		builder.WriteString(fmt.Sprintf("%s=%s", k, v))
+		lineWritten = true
+	}
+	return builder.String()
 }
