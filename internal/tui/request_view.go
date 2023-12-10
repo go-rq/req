@@ -110,6 +110,33 @@ func NewRequestView(ctx context.Context, app *tview.Application, request rq.Requ
 				ev.Mount(app)
 			},
 		},
+		{
+			Name: "Edit",
+			Key:  tcell.KeyRune,
+			Rune: 'e',
+			Handler: func() {
+				ev := NewTextEditorView(
+					ctx,
+					app,
+					func() { view.Mount(app) },
+					func(update string) {
+						reqs, err := rq.ParseRequests(update)
+						if err != nil {
+							view.showError(err)
+							return
+						}
+						if len(reqs) > 1 {
+							view.showError(fmt.Errorf("unable to edit multiple requests at once"))
+							return
+						}
+						view.request = &reqs[0]
+						view.Mount(app)
+					},
+					"Edit",
+					view.request.String())
+				ev.Mount(app)
+			},
+		},
 	}
 
 	view.frame.AddText(request.DisplayName(), true, tview.AlignCenter, tcell.ColorForestGreen)
