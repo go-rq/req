@@ -5,7 +5,7 @@ go 1.21.3
 require (
 	github.com/alecthomas/chroma v0.10.0
 	github.com/atotto/clipboard v0.1.4
-	github.com/gdamore/tcell/v2 v2.6.0
+	github.com/gdamore/tcell/v2 v2.7.0
 	github.com/go-rq/rq v0.3.2-0.20231210180420-75a047590e95
 	github.com/rivo/tview v0.0.0-20231126152417-33a1d271f2b6
 	github.com/sahilm/fuzzy v0.1.0
