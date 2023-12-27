@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.4.0](https://github.com/go-rq/req/compare/v0.3.0...v0.4.0) (2023-12-27)
+
+
+### Features
+
+* Add Variable Editor view ([#25](https://github.com/go-rq/req/issues/25)) ([02a1d08](https://github.com/go-rq/req/commit/02a1d0850e2b91ac78f8a511d2065d546399f8c5))
+* allow editing of the current request ([#26](https://github.com/go-rq/req/issues/26)) ([5aee63b](https://github.com/go-rq/req/commit/5aee63b53ba3b6a3b2f35fa55580825347087309))
+
+
+### Bug Fixes
+
+* use a default env map if an env file is not provided ([#23](https://github.com/go-rq/req/issues/23)) ([1cca5b5](https://github.com/go-rq/req/commit/1cca5b5db80253299a71cc1fa1c7ffea3b33d015))
+
+
+### Documentation
+
+* Fix the name of assert function from README. ([#33](https://github.com/go-rq/req/issues/33)) ([96713a8](https://github.com/go-rq/req/commit/96713a867840580499ee64b699aa3c017756689f))
+
 ## [0.3.0](https://github.com/go-rq/req/compare/v0.2.0...v0.3.0) (2023-11-27)
 
 
