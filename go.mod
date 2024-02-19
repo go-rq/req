@@ -5,7 +5,7 @@ go 1.21.3
 require (
 	github.com/alecthomas/chroma v0.10.0
 	github.com/atotto/clipboard v0.1.4
-	github.com/gdamore/tcell/v2 v2.7.0
+	github.com/gdamore/tcell/v2 v2.7.1
 	github.com/go-rq/rq v0.4.0
 	github.com/rivo/tview v0.0.0-20231126152417-33a1d271f2b6
 	github.com/sahilm/fuzzy v0.1.0
@@ -23,7 +23,7 @@ require (
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/rivo/uniseg v0.4.4 // indirect
 	golang.org/x/exp v0.0.0-20220303212507-bbda1eaf7a17 // indirect
-	golang.org/x/sys v0.15.0 // indirect
-	golang.org/x/term v0.15.0 // indirect
+	golang.org/x/sys v0.17.0 // indirect
+	golang.org/x/term v0.17.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 )
